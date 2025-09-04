@@ -1,0 +1,51 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+
+# Build output
+dist/
+build/
+*.pyc
+*.pyo
+
+# React build output
+frontend_capstone/shopping_client/build/
+
+# IDE/editor files
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+backend_capstone/.env
+
+# Python cache
+*.py[cod]
+*$py.class
+
+# FastAPI specific
+__pycache__/
+*.sqlite3
+
+# Others
+*.egg-info/
+*.egg
