@@ -6,9 +6,11 @@ const ProductApi = {
   createProducts: "/api/v1/products/create-products",
   addtoCart: "/api/v1/cart/add-cart-item",
   getCart: "/api/v1/cart/get-cart-items",
+  orderCart: "/api/v1/order/create-order",
+  addAddress: "/api/v1/user/add-address",
 };
 
-const Getproducts = async (token, searchQuery = "") => {
+const Getproducts = async (token, searchQuery = "" ,page = 1, perPage = 20) => {
   try {
     const response = await axiosInstance.get(ProductApi.getProducts, {
       headers: {
@@ -17,6 +19,8 @@ const Getproducts = async (token, searchQuery = "") => {
       },
       params: {
         search: searchQuery || undefined,
+        page,
+        per_page: perPage,
       },
     });
 
@@ -111,6 +115,46 @@ const DeleteCartItem = async (product_id, token) => {
   }
 };
 
+
+const CreateOrder = async (orderData, token) => {
+  try {
+    const response = await axiosInstance.post(
+      `${ProductApi.orderCart}`,
+      orderData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error creating order:", error);
+    throw error;
+  }
+};
+
+const AddAddress = async (addressData, token) => {
+  try {
+    const response = await axiosInstance.post(
+      `${ProductApi.addAddress}`,
+      addressData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error adding address:", error);
+    throw error;
+  }
+};
+
 export default {
   Getproducts,
   GetImages,
@@ -118,4 +162,6 @@ export default {
   AddtoCart,
   GetCartProducts,
   DeleteCartItem,
+  CreateOrder,
+  AddAddress
 };

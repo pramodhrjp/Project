@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Form, Input, InputNumber, Button, Select, Upload } from "antd";
+import { Form, Input, InputNumber, Button, Select, Upload, Flex } from "antd";
 import { ConsoleSqlOutlined, PlusOutlined } from "@ant-design/icons";
 import productApi from "../components/api/product/product";
+import { useNavigate } from "react-router-dom";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -17,6 +18,10 @@ const ProductForm = () => {
   const token = localStorage.getItem("token");
   const [form] = Form.useForm();
 
+  const NavigateHome = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  };
 
   const submitForm = async (values) => {
     try {
@@ -24,7 +29,6 @@ const ProductForm = () => {
       values.img.forEach((i) => {
         imageDataObj[i.name] = i;
       });
-      
 
       const image_array = values.img.map((i) => i.name);
 
@@ -37,20 +41,20 @@ const ProductForm = () => {
       if (response?.status_code === 0 && response?.data) {
         const image_urls = response.data.urls;
 
-        const task = image_urls.map(async({doc_type,url}) => {
+        const task = image_urls.map(async ({ doc_type, url }) => {
           const file = imageDataObj[doc_type];
           if (file) {
-            console.log("file", file)
+            console.log("file", file);
             await fetch(url, {
               method: "PUT",
               headers: {
-                "Content-Type":file.type,
+                "Content-Type": file.type,
               },
-              body:file
-            })
+              body: file,
+            });
           }
-        })
-      
+        });
+
         await Promise.all(task);
       }
     } catch (error) {
@@ -163,6 +167,13 @@ const ProductForm = () => {
         <Form.Item>
           <Button type="primary" htmlType="submit">
             Create Product
+          </Button>
+          <Button
+            type="primary"
+            style={{ display: Flex, margin: "30px" }}
+            onClick={NavigateHome}
+          >
+            Exit{" "}
           </Button>
         </Form.Item>
       </Form>

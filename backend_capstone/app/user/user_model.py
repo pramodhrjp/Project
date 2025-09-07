@@ -33,7 +33,20 @@ class UserRegister(BaseModel):
     mobile: int
 
 
-
+class AddressRequest(BaseModel):
+    address_id:str = None
+    mobile:Optional[str] = None
+    name:Optional[str] = None
+    address1:str
+    address2:str
+    pincode: constr(min_length=6, max_length=6, pattern=PIN_REGEX)
+    city:str
+    state:str
+    is_default:bool = True
+    address_type:Literal["WORK","HOME","OTHER"]
+    lat:Optional[str] = None
+    lng:Optional[str] = None
+    is_active:Optional[bool] = True
 
 class AddressModel(BaseModel):
     address_id:str
@@ -45,7 +58,7 @@ class AddressModel(BaseModel):
     state:str
     is_default:bool = True
     is_active:bool = True
-    address_type:Literal["WORK","OTHER"]
+    address_type:Literal["WORK","OTHER","HOME"]
     lat:Optional[str]=None
     lng:Optional[str]=None
 

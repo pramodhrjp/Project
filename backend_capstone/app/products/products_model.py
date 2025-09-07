@@ -46,3 +46,6 @@ class ProductRequest(BaseModel):
 
 class PresignedRequest(BaseModel):
     files: List[str]
+
+
+

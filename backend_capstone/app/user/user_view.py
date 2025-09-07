@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.auth.auth_model import UserTokenPayload
 from app.auth.auth_service import check_roles
-from app.user.user_model import Login, UserRegister, User, UserResponseModel
-from app.user.user_service import user_login, register_new_user
+from app.user.user_model import Login, UserRegister, User, UserResponseModel, AddressRequest
+from app.user.user_service import user_login, register_new_user, add_or_update_address
 
 user_router = APIRouter()
 
@@ -53,6 +53,24 @@ async def handler_get_me_detail(
             cart = user.cart
         )
         return {"data":response_data,"status_code":0}
+    except HTTPException as e:
+        return {"error": e.detail, "status_code": e.status_code}
+
+
+
+@user_router.post("/add-address")
+async def handler_create_or_update_address(
+        req: AddressRequest,
+        current_user: UserTokenPayload = Depends(check_roles())
+):
+    try:
+        response,status_code = await add_or_update_address(
+            user_id = current_user.user_id,
+            address=req
+        )
+        if status_code == 0:
+            return {"data":response,"status_code":status_code}
+        return {"error":response,"status_code":status_code}
     except HTTPException as e:
         return {"error": e.detail, "status_code": e.status_code}
 

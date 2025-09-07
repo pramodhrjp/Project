@@ -65,6 +65,8 @@ async def get_all_products(
     if is_active is not None:
         query["is_active"] = is_active
 
+    total = await Products.find(query).count()
+
 
     products = (
         await Products.find(query)
@@ -77,5 +79,6 @@ async def get_all_products(
     return {
         "page": page,
         "per_page": per_page,
+        "total": total,
         "products": products,
     }, 0

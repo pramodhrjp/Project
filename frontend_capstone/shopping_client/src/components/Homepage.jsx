@@ -10,12 +10,19 @@ import {
   Button,
   Drawer,
   Badge,
+  Pagination,
 } from "antd";
-import { ShoppingCartOutlined, LogoutOutlined } from "@ant-design/icons";
+import {
+  ShoppingCartOutlined,
+  LogoutOutlined,
+  ShoppingOutlined,
+} from "@ant-design/icons";
 import productApi from "../components/api/product/product";
 import Meta from "antd/es/card/Meta";
 import logo from "../assets/parishudh.png";
 import PaymentDialog from "./PaymentDialog";
+import AddAddressForm from "./AddressPage";
+import noimage from "../assets/noimage.png";
 
 const { Search } = Input;
 const { Header } = Layout;
@@ -32,6 +39,13 @@ const Homepage = ({ user }) => {
   const [itemCount, setItemCount] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isAddAddressOpen, setIsAddAddressOpen] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage] = useState(20);
+  const [totalProducts, setTotalProducts] = useState(0);
+
+  const [orderCount, setOrderCount] = useState(0);
   const debounceTimeout = useRef(null);
 
   console.log("cartItems", cartItems);
@@ -49,6 +63,18 @@ const Homepage = ({ user }) => {
       [id]: Math.max((prev[id] || 1) - 1, 1),
     }));
 
+  const handlePlaceOrder = () => {
+    if (totalPrice <= 0) {
+      message.warning("Cannot place order with ₹0 total");
+      return;
+    }
+    if (!user.address || user.address.length === 0) {
+      setIsAddAddressOpen(true);
+    } else {
+      setIsPaymentDialogOpen(true);
+    }
+  };
+
   const handleQuantityChange = (id, value) => {
     const val = Number(value);
     if (!isNaN(val) && val > 0) {
@@ -57,6 +83,13 @@ const Homepage = ({ user }) => {
         [id]: val,
       }));
     }
+  };
+  const handlePaymentSuccess = async (paymentId) => {
+    console.log("Payment ID:", paymentId);
+    setCartItems([]);
+    setItemCount(0);
+    setQuantity({});
+    setIscartOpen(false);
   };
 
   const removeFromCart = async (product_id) => {
@@ -123,7 +156,7 @@ const Homepage = ({ user }) => {
   };
 
   useEffect(() => {
-    const image_name = products.map((img) => img.img[0]);
+    const image_name = products.map((img) => img.img[0]).filter((file) => file);
     const item_cart = Object.values(user.cart).reduce(
       (sum, item) => sum + item.quantity,
       0
@@ -152,26 +185,29 @@ const Homepage = ({ user }) => {
     if (products.length > 0) getimg();
   }, [products]);
 
-  const fetchProducts = async (search = "") => {
+  const fetchProducts = async (search = "", page = 1) => {
     setLoading(true);
     try {
-      const response = await productApi.Getproducts(token, search);
+      const response = await productApi.Getproducts(token, search, page);
       if (response?.status_code === 0) {
         setProducts(response.data.products);
+        setTotalProducts(response.data.total || 0);
       }
     } catch (error) {
       console.error("Error fetching products:", error);
     }
     setLoading(false);
   };
-
   useEffect(() => {
     const handler = setTimeout(() => {
-      fetchProducts(searchQuery);
-    }, 300); 
+      fetchProducts(searchQuery, currentPage);
+    }, 300);
 
     return () => clearTimeout(handler);
-  }, [searchQuery]);
+  }, [searchQuery, currentPage]);
+  const onPageChange = (page) => {
+    setCurrentPage(page);
+  };
   return (
     <>
       {loading ? (
@@ -218,6 +254,18 @@ const Homepage = ({ user }) => {
                 enterButton
                 allowClear
               />
+              <Tooltip title="Orders">
+                <Badge count={0} showZero>
+                  <ShoppingOutlined
+                    onClick={() => setIscartOpen(true)}
+                    style={{
+                      fontSize: "24px",
+                      color: "#000",
+                      cursor: "pointer",
+                    }}
+                  />
+                </Badge>
+              </Tooltip>
 
               <Tooltip title="Cart">
                 <Badge count={itemCount} showZero>
@@ -256,7 +304,7 @@ const Homepage = ({ user }) => {
                   cover={
                     <img
                       alt={product.name}
-                      src={produtimg[product.img[0]]}
+                      src={produtimg[product.img[0]] || noimage}
                       style={{
                         height: 200,
                         width: "100%",
@@ -362,7 +410,7 @@ const Homepage = ({ user }) => {
               type="primary"
               block
               style={{ marginTop: 16 }}
-              onClick={() => setIsPaymentDialogOpen(true)}
+              onClick={handlePlaceOrder}
             >
               Place Order ₹{totalPrice.toFixed(2)}
             </Button>
@@ -373,6 +421,22 @@ const Homepage = ({ user }) => {
             onClose={() => setIsPaymentDialogOpen(false)}
             totalAmount={totalPrice}
             user={user}
+            onPaymentSuccess={handlePaymentSuccess}
+          />
+          <AddAddressForm
+            visible={isAddAddressOpen}
+            onClose={() => setIsAddAddressOpen(false)}
+            onSuccess={() => {
+              setIsAddAddressOpen(false);
+            }}
+            token={token}
+          />
+          <Pagination
+            current={currentPage}
+            pageSize={perPage}
+            total={totalProducts}
+            onChange={onPageChange}
+            style={{ textAlign: "center", marginTop: 20 }}
           />
         </>
       )}

@@ -8,12 +8,10 @@ import SignUppage from "./components/SignUppage";
 import ProductForm from "./components/AdminPage";
 import { Spin } from "antd";
 
-
-
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const fetchUser = async () => {
       if (token) {
@@ -38,7 +36,7 @@ function App() {
       } else {
         setUser(null);
       }
-    setLoading(false);
+      setLoading(false);
     };
 
     fetchUser();
