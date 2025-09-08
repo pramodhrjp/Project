@@ -9,3 +9,4 @@ A B2B bulk ordering web application where users can browse products, manage cart
 - Cart Management with quantity selection and auto price calculation
 - Order Placement with payment dialog simulation
 - Product Images dynamically fetched from backend
+- Pagination, search enabled.

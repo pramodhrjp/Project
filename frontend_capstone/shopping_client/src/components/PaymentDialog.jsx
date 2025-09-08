@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Radio, message } from "antd";
+import productApi from "../components/api/product/product";
 
 const loadRazorpayScript = () =>
   new Promise((resolve) => {
@@ -10,10 +11,52 @@ const loadRazorpayScript = () =>
     document.body.appendChild(script);
   });
 
-const PaymentDialog = ({ open, onClose, totalAmount, user, onPaymentSuccess }) => {
-  const [paymentMethod, setPaymentMethod] = useState("cod");
+const PaymentDialog = ({
+  open,
+  onClose,
+  totalAmount,
+  user,
+  onPaymentSuccess,
+}) => {
+  const [paymentMethod, setPaymentMethod] = useState("online");
   const [alert, setAlert] = useState(null);
   const [alertMessage, setAlertMessage] = useState("");
+  const placeOrder = async (paymentId = null) => {
+    const token = localStorage.getItem("token");
+
+    const payload = {
+      products: cartItems.map((item) => ({
+        product_id: item.product_id,
+        product_name: item.product_name,
+        selling_price: item.selling_price,
+        quantity: item.quantity,
+        tax_rate: item.tax_rate || 5,
+      })),
+      delivery_address: user.address[0], 
+      delivery_details: {
+        delivery_partner: "MANUAL",
+        shipping_charge: 0,
+        delivery_type: paymentMethod === "cod" ? "COD" : "ONLINE",
+      },
+      payment_id: paymentId,
+      payment_method: paymentMethod,
+    };
+
+    try {
+      const res = await productApi.CreateOrder(payload, token);
+
+      if (res?.status_code === 0) {
+        message.success("Order placed successfully");
+        onPaymentSuccess(paymentId); 
+        onClose();
+      } else {
+        message.error(res?.error || "Failed to place order");
+      }
+    } catch (error) {
+      console.error("Order creation error:", error);
+      message.error("Something went wrong while placing the order.");
+    }
+  };
 
   const handleRazorpayPayment = async () => {
     const res = await loadRazorpayScript();
@@ -32,6 +75,7 @@ const PaymentDialog = ({ open, onClose, totalAmount, user, onPaymentSuccess }) =
       handler: function (response) {
         console.log("Payment success:", response);
         message.success("Payment Successful!");
+        placeOrder(response.razorpay_payment_id); 
         onPaymentSuccess(response.razorpay_payment_id);
         // i should do bakc edn
         onClose();
@@ -83,7 +127,10 @@ const PaymentDialog = ({ open, onClose, totalAmount, user, onPaymentSuccess }) =
           onChange={(e) => setPaymentMethod(e.target.value)}
           value={paymentMethod}
         >
-          <Radio value="cod">Cash on Delivery</Radio>
+          <Radio value="cod" disabled>
+            Cash on Delivery{" "}
+            <span style={{ color: "red" }}>(Currently Unavailable)</span>
+          </Radio>
           <Radio value="online">Online Payment (Razorpay)</Radio>
         </Radio.Group>
       </Modal>

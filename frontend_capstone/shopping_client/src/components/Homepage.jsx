@@ -11,6 +11,7 @@ import {
   Drawer,
   Badge,
   Pagination,
+  message,
 } from "antd";
 import {
   ShoppingCartOutlined,
@@ -27,7 +28,7 @@ import noimage from "../assets/noimage.png";
 const { Search } = Input;
 const { Header } = Layout;
 
-const Homepage = ({ user }) => {
+const Homepage = ({ user, fetchUser }) => {
   const token = localStorage.getItem("token");
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -63,6 +64,33 @@ const Homepage = ({ user }) => {
       [id]: Math.max((prev[id] || 1) - 1, 1),
     }));
 
+  const handleAddressSuccess = (newAddress) => {
+    setIsAddAddressOpen(false);
+    // setUser((prevUser) => ({
+    //   ...prevUser,
+    //   address: [newAddress],
+    // }));
+    fetchUser();
+  };
+
+  useEffect(() => {
+    const cart = user.cart || {};
+
+    setCartItems(Object.values(cart));
+
+    const item_cart = Object.values(cart).reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+    setItemCount(item_cart);
+
+    const initialQuantities = {};
+    Object.values(cart).forEach((item) => {
+      initialQuantities[item.product_id] = item.quantity;
+    });
+    setQuantity(initialQuantities);
+  }, [user.cart]);
+
   const handlePlaceOrder = () => {
     if (totalPrice <= 0) {
       message.warning("Cannot place order with ₹0 total");
@@ -95,9 +123,6 @@ const Homepage = ({ user }) => {
   const removeFromCart = async (product_id) => {
     try {
       await productApi.DeleteCartItem(product_id, token);
-      setCartItems((prev) =>
-        prev.filter((item) => item.product_id !== product_id)
-      );
       setCartItems((prev) => {
         const updatedCart = prev.filter(
           (item) => item.product_id !== product_id
@@ -124,29 +149,30 @@ const Homepage = ({ user }) => {
     };
     const response = await productApi.AddtoCart(payload, token);
     if (response?.status_code === 0) {
-      const newItem = response.data;
-      setCartItems((prev) => {
-        const existing = prev.find(
-          (item) => item.product_id === newItem.product_id
-        );
-        if (existing) {
-          return prev.map((item) =>
-            item.product_id === newItem.product_id ? newItem : item
-          );
-        } else {
-          return [...prev, newItem];
-        }
-      });
-      setItemCount((prev) => {
-        const otherItems = cartItems.filter(
-          (item) => item.product_id !== newItem.product_id
-        );
-        const newTotal = [...otherItems, newItem].reduce(
-          (sum, item) => sum + item.quantity,
-          0
-        );
-        return newTotal;
-      });
+      await fetchUser();
+      // const newItem = response.data;
+      // setCartItems((prev) => {
+      //   const existing = prev.find(
+      //     (item) => item.product_id === newItem.product_id
+      //   );
+      //   if (existing) {
+      //     return prev.map((item) =>
+      //       item.product_id === newItem.product_id ? newItem : item
+      //     );
+      //   } else {
+      //     return [...prev, newItem];
+      //   }
+      // });
+      // setItemCount((prev) => {
+      //   const otherItems = cartItems.filter(
+      //     (item) => item.product_id !== newItem.product_id
+      //   );
+      //   const newTotal = [...otherItems, newItem].reduce(
+      //     (sum, item) => sum + item.quantity,
+      //     0
+      //   );
+      //   return newTotal;
+      // });
     }
   };
 
@@ -157,19 +183,6 @@ const Homepage = ({ user }) => {
 
   useEffect(() => {
     const image_name = products.map((img) => img.img[0]).filter((file) => file);
-    const item_cart = Object.values(user.cart).reduce(
-      (sum, item) => sum + item.quantity,
-      0
-    );
-
-    setItemCount(item_cart);
-    setCartItems(Object.values(user.cart));
-
-    const initialQuantities = {};
-    Object.values(user.cart).forEach((item) => {
-      initialQuantities[item.product_id] = item.quantity;
-    });
-    setQuantity(initialQuantities);
 
     const getimg = async () => {
       const response = await productApi.GetImages({ files: image_name }, token);
@@ -421,14 +434,13 @@ const Homepage = ({ user }) => {
             onClose={() => setIsPaymentDialogOpen(false)}
             totalAmount={totalPrice}
             user={user}
+            cartItems={cartItems}
             onPaymentSuccess={handlePaymentSuccess}
           />
           <AddAddressForm
             visible={isAddAddressOpen}
             onClose={() => setIsAddAddressOpen(false)}
-            onSuccess={() => {
-              setIsAddAddressOpen(false);
-            }}
+            onSuccess={handleAddressSuccess}
             token={token}
           />
           <Pagination

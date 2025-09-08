@@ -12,33 +12,33 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (token) {
-        try {
-          const response = await userApi.Me(token);
 
-          if (response.data?.status_code === 0) {
-            setUser(response.data.data);
-            setLoading(false);
-            return;
-          }
+  const fetchUser = async () => {
+    if (token) {
+      try {
+        const response = await userApi.Me(token);
 
-          setUser(null);
-          localStorage.removeItem("token");
-          setToken(null);
-        } catch (err) {
-          console.log("Error fetching user:", err);
-          setUser(null);
-          setToken(null);
-          localStorage.removeItem("token");
+        if (response.data?.status_code === 0) {
+          setUser(response.data.data);
+          setLoading(false);
+          return;
         }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    };
 
+        setUser(null);
+        localStorage.removeItem("token");
+        setToken(null);
+      } catch (err) {
+        console.log("Error fetching user:", err);
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem("token");
+      }
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
+  };
+  useEffect(() => {
     fetchUser();
   }, [token]);
 
@@ -75,7 +75,12 @@ function App() {
 
         {user?.role === "user" && (
           <>
-            <Route path="/" element={<Homepage user={user} />} />
+            <Route
+              path="/"
+              element={
+                <Homepage user={user} fetchUser={fetchUser} />
+              }
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </>
         )}
