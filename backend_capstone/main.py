@@ -21,7 +21,7 @@ async def close_db():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173","https://parishudh.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
